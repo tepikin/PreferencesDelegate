@@ -30,8 +30,8 @@ open class KotlinPreferences(override val sharedPreferences: SharedPreferences) 
 
 interface PreferencesInterface {
     val sharedPreferences: SharedPreferences
+    val iCommitImmediate  get() = true
 }
-
 
 class PreferenceDelegate<T>(val defValue: T? = null) {
 
@@ -90,6 +90,10 @@ class PreferenceDelegate<T>(val defValue: T? = null) {
                     is Long?    -> putLong(name, value ?: defValue as? Long ?: longDefNull ?: longDef)
                     else        -> throw IllegalArgumentException("Unknown parameter type")
                 }
-                commit()
+                if (thisRef.iCommitImmediate) {
+                    commit()
+                }else{
+                    apply()
+                }
             }
 }
