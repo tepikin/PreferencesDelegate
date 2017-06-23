@@ -1,15 +1,19 @@
 package ru.lazard.kotlinpreferences
 
 import android.content.Context
-import android.support.annotation.Nullable
-import ru.lazard.preferencesdelegate.KotlinPreferences
+import android.content.SharedPreferences
+import android.preference.PreferenceManager
 import ru.lazard.preferencesdelegate.PreferenceDelegate
+import ru.lazard.preferencesdelegate.PreferencesInterface
 
 
 /**
  * Simple usage of PreferenceDelegate
  */
-class MyPreferences(context:Context): KotlinPreferences(context) {
+class MyPreferences(context: Context) : PreferencesInterface {
+
+    override val sharedPreferences: SharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
+
     /**
      *  Preference with name "stringParam", type [String], default value <code>null</code>
      */
