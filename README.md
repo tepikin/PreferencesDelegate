@@ -1,0 +1,2 @@
+# PreferencesDelegate
+Delegate for SharedPreferences
