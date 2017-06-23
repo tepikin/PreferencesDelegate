@@ -30,6 +30,6 @@ allprojects {
 **Step 2.** Add the dependency
 ```gradle
 dependencies {
-    compile 'com.github.tepikin:PreferencesDelegate:master-SNAPSHOT'
+    compile 'com.github.tepikin:PreferencesDelegate:v0.1'
 }
 ```
