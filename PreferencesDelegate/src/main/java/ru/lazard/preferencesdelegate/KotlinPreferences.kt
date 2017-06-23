@@ -21,45 +21,75 @@ interface PreferencesInterface {
 
 class PreferenceDelegate<T>(val defValue: T? = null) {
 
-
-    operator fun getValue(thisRef: PreferencesInterface, property: KProperty<*>): T =
-            thisRef.sharedPreferences.let {
-                val name = property.name
-                val erasure = property.returnType.jvmErasure
-
-                if (!it.contains(name)) return defValue as T
-
-                when {
-                    erasure.isSubclassOf(String::class)  -> return it.getString(name, null) as T
-                    erasure.isSubclassOf(Set::class)     -> return it.getStringSet(name, null) as T
-                    erasure.isSubclassOf(Boolean::class) -> return it.getBoolean(name, false) as T
-                    erasure.isSubclassOf(Float::class)   -> return it.getFloat(name, 0f) as T
-                    erasure.isSubclassOf(Int::class)     -> return it.getInt(name, 0) as T
-                    erasure.isSubclassOf(Long::class)    -> return it.getLong(name, 0L) as T
-                    else                                 -> throw IllegalArgumentException("Unknown parameter type")
-                }
-            }
+    private lateinit var delegate: Delegate<*>
+    private lateinit var preferences: SharedPreferences
+    private lateinit var editor: SharedPreferences.Editor
+    private lateinit var name: String
 
 
-    operator fun setValue(thisRef: PreferencesInterface, property: KProperty<*>, value: T?) =
-            thisRef.sharedPreferences.edit().apply {
-                val name = property.name
-                val erasure = property.returnType.jvmErasure
-                if (value == null) remove(name) else
-                    when (value) {
-                        erasure.isSubclassOf(String::class)  -> putString(name, value as String)
-                        erasure.isSubclassOf(Set::class)     -> putStringSet(name, value as Set<String>?)
-                        erasure.isSubclassOf(Boolean::class) -> putBoolean(name, value as Boolean)
-                        erasure.isSubclassOf(Float::class)   -> putFloat(name, value as Float)
-                        erasure.isSubclassOf(Int::class)     -> putInt(name, value as Int)
-                        erasure.isSubclassOf(Long::class)    -> putLong(name, value as Long)
-                        else                                 -> throw IllegalArgumentException("Unknown parameter type")
-                    }
+    private fun initDelegate(thisRef: PreferencesInterface, property: KProperty<*>) {
+        preferences = thisRef.sharedPreferences
+        editor = preferences.edit()
+        name = property.name
+        val erasure = property.returnType.jvmErasure
+        when {
+            erasure.isSubclassOf(String::class)  -> delegate = DelegateString()
+            erasure.isSubclassOf(Set::class)     -> delegate = DelegateStringSet()
+            erasure.isSubclassOf(Boolean::class) -> delegate = DelegateBoolean()
+            erasure.isSubclassOf(Float::class)   -> delegate = DelegateFloat()
+            erasure.isSubclassOf(Int::class)     -> delegate = DelegateInt()
+            erasure.isSubclassOf(Long::class)    -> delegate = DelegateLong()
+            else                                 -> throw IllegalArgumentException("Unknown parameter type ${property.returnType} - ${erasure}")
+        }
+    }
 
-                if (thisRef.iCommitImmediate) {
-                    commit()
-                } else {
-                    apply()
-                }
-            }
+    operator fun getValue(thisRef: PreferencesInterface, property: KProperty<*>): T {
+        initDelegate(thisRef, property);
+        if (!preferences.contains(name)) return defValue as T
+        return delegate.get() as T
+    }
+
+
+    operator fun setValue(thisRef: PreferencesInterface, property: KProperty<*>, value: T?) {
+        initDelegate(thisRef, property);
+        if (value == null) editor.remove(name) else delegate.set(value)
+        if (thisRef.iCommitImmediate) editor.commit() else editor.apply()
+    }
+
+    private interface Delegate<T> {
+        fun get(): T
+        fun set(value: Any): SharedPreferences.Editor
+    }
+
+    private inner class DelegateString : Delegate<String> {
+        override fun get() = preferences.getString(name, null)
+        override fun set(value: Any) = editor.putString(name, value as String)
+    }
+
+    private inner class DelegateInt : Delegate<Int> {
+        override fun get() = preferences.getInt(name, 0)
+        override fun set(value: Any) = editor.putInt(name, value as Int)
+    }
+
+    private inner class DelegateFloat : Delegate<Float> {
+        override fun get() = preferences.getFloat(name, 0f)
+        override fun set(value: Any) = editor.putFloat(name, value as Float)
+    }
+
+    private inner class DelegateBoolean : Delegate<Boolean> {
+        override fun get() = preferences.getBoolean(name, false)
+        override fun set(value: Any) = editor.putBoolean(name, value as Boolean)
+    }
+
+    private inner class DelegateLong : Delegate<Long> {
+        override fun get() = preferences.getLong(name, 0L)
+        override fun set(value: Any) = editor.putLong(name, value as Long)
+    }
+
+    private inner class DelegateStringSet : Delegate<Set<String>> {
+        override fun get() = preferences.getStringSet(name, setOf())
+        override fun set(value: Any) = editor.putStringSet(name, value as Set<String>)
+    }
+
+
 }
