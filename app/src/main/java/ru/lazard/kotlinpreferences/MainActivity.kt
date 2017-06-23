@@ -3,6 +3,7 @@ package ru.lazard.kotlinpreferences
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import android.widget.TextView
+import ru.lazard.preferencesdelegate.SpeedTest
 
 class MainActivity : AppCompatActivity() {
 
@@ -25,6 +26,8 @@ class MainActivity : AppCompatActivity() {
         settings.intParam = 10
         printValues()
 
+
+        SpeedTest(this).runTests()
 
     }
 
