@@ -3,7 +3,7 @@
 Lib for easy work with SharedPreferences.
 
 Simple usage
-```java
+```kotlin
 class MyPreferences(context: Context) : PreferencesInterface {
     override val sharedPreferences: SharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
 
